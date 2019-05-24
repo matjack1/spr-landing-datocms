@@ -1,10 +1,11 @@
 import Layout from "../layouts/index";
-import getNotionData from "../data/notion";
+import getData from "../data/dato";
 import { useState, useEffect } from "react";
 import Color from "color";
 import Head from "next/head";
+import ReactMarkdown from "react-markdown";
 
-export default function Page({ sections, etag, meta }) {
+export default function Page({ data, etag }) {
   const focused = useFocus();
   useEffect(
     () => {
@@ -23,64 +24,54 @@ export default function Page({ sections, etag, meta }) {
     [focused]
   );
 
-  const color = Color(meta.color ? meta.color[0][0] : "#49fcd4");
+  const color = Color({r: data.color.red, g: data.color.green, b: data.color.blue});
   const color2 = color.darken(0.4);
   const color3 = color2.lighten(0.1);
 
   return (
     <Layout>
       <Head>
-        {meta.title && <title>{meta.title[0][0]}</title>}
-        {meta.description && (
-          <meta name="description" content={meta.description[0][0]} />
-        )}
+        <title>{data.seoMeta.title}</title>
+        <meta name="description" content={data.seoMeta.description} />
       </Head>
 
-      {sections.map((section, i) => {
+      <section key={`section-hero`} className="intro">
+        <header>
+          <h1>{data.title}</h1>
+          
+          <p>{data.subtitle}</p>
+          
+          <ul className="actions">
+            <li>
+              <a href="#first" className="arrow scrolly">
+                <span className="label">Next</span>
+              </a>
+            </li>
+          </ul>
+        </header>
+        <div className="content">
+          <span className="image fill">
+            <img title="image" src={data.heroImage.url} />
+          </span>
+        </div>
+      </section>
+
+      {data.content.map((section, i) => {
         return (
           <section
             key={`section-${i}`}
-            className={i === 0 ? "intro" : ""}
             id={i === 1 ? "first" : ""}
           >
             <header>
-              {i === 0 ? (
-                <>
-                  <h1>{renderText(section.title)}</h1>
-                  {section.children[0] &&
-                  section.children[0].type === "text" ? (
-                    <p>{renderText(section.children[0].value)}</p>
-                  ) : null}
-                  <ul className="actions">
-                    <li>
-                      <a href="#first" className="arrow scrolly">
-                        <span className="label">Next</span>
-                      </a>
-                    </li>
-                  </ul>
-                </>
-              ) : (
-                <h2>{renderText(section.title)}</h2>
-              )}
+              <h2>{section.title}</h2>
             </header>
             <div className="content">
-              {section.children.map(subsection =>
-                subsection.type === "image" ? (
-                  <span className={`image ${i === 0 ? "fill" : "main"}`}>
-                    <NotionImage src={subsection.src} />
-                  </span>
-                ) : subsection.type === "text" ? (
-                  i !== 0 && <p>{renderText(subsection.value)}</p>
-                ) : subsection.type === "list" ? (
-                  i !== 0 && (
-                    <ul>
-                      {subsection.children.map(child => (
-                        <li>{renderText(child)}</li>
-                      ))}
-                    </ul>
-                  )
-                ) : null
-              )}
+              <ReactMarkdown source={section.text} />
+
+              {section.image && (
+              <span className="image main">
+                <img title="image" src={section.image.url} />
+              </span>)}
             </div>
           </section>
         );
@@ -167,10 +158,10 @@ export default function Page({ sections, etag, meta }) {
 }
 
 Page.getInitialProps = async ({ res }) => {
-  const notionData = await getNotionData();
+  const data = await getData();
   const etag = require("crypto")
     .createHash("md5")
-    .update(JSON.stringify(notionData))
+    .update(JSON.stringify(data))
     .digest("hex");
 
   if (res) {
@@ -178,28 +169,8 @@ Page.getInitialProps = async ({ res }) => {
     res.setHeader("X-version", etag);
   }
 
-  return { ...notionData, etag };
+  return { data, etag };
 };
-
-function renderText(title) {
-  return title.map(chunk => {
-    let wrapper = <span>{chunk[0]}</span>;
-
-    (chunk[1] || []).forEach(el => {
-      wrapper = React.createElement(el[0], {}, wrapper);
-    });
-
-    return wrapper;
-  });
-}
-
-function NotionImage({ src }) {
-  if (src) {
-    return <img title="image" src={src} />;
-  } else {
-    return <div />;
-  }
-}
 
 const useFocus = () => {
   const [state, setState] = useState(null);

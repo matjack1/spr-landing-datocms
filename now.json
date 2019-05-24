@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "spr-landing",
+  "name": "spr-landing-datocms",
   "regions": ["sfo"],
   "builds": [
     { "src": "image.js", "use": "@now/node" },
