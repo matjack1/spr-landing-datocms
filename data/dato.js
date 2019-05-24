@@ -1,20 +1,35 @@
-const SiteClient = require('datocms-client').SiteClient;
+import { GraphQLClient } from "graphql-request";
 
 export default async function getData() {
-  const client = new SiteClient(process.env.DATO_API_TOKEN);
-  let landing = (await client.items.all())[0];
+  const client = new GraphQLClient('https://graphql.datocms.com/', {
+    headers: {
+      Authorization: process.env.DATO_API_TOKEN,
+    },
+  })
 
-  landing.heroImage = await client.uploads.find(landing.heroImage);
-
-  const sectionIds = landing.content;
-  landing.content = [];
-  for(let i=0; i<sectionIds.length; i++) {
-    let content = await client.items.find(sectionIds[i]);
-    if(content.image) {
-      content.image = await client.uploads.find(content.image);
+  const query = `{
+    landing {
+      title
+      subtitle
+      color {
+        hex
+      }
+      seoMeta {
+        title
+        description
+      }
+      heroImage {
+        url
+      }
+      content {
+        title
+        text
+        image {
+          url
+        }
+      }
     }
-    landing.content.push(content);
-  }
+  }`;
 
-  return landing;
+  return (await client.request(query)).landing;
 }

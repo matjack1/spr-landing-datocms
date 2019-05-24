@@ -24,7 +24,7 @@ export default function Page({ data, etag }) {
     [focused]
   );
 
-  const color = Color({r: data.color.red, g: data.color.green, b: data.color.blue});
+  const color = Color(data.color.hex);
   const color2 = color.darken(0.4);
   const color3 = color2.lighten(0.1);
 
