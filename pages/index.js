@@ -6,23 +6,7 @@ import Head from "next/head";
 import ReactMarkdown from "react-markdown";
 
 export default function Page({ data, etag }) {
-  const focused = useFocus();
-  useEffect(
-    () => {
-      if (focused) {
-        fetch(window.location, {
-          headers: {
-            pragma: "no-cache"
-          }
-        }).then(res => {
-          if (res.ok && res.headers.get("x-version") !== etag) {
-            window.location.reload();
-          }
-        });
-      }
-    },
-    [focused]
-  );
+  reloadOnContentChange(etag);
 
   const color = Color(data.color.hex);
   const color2 = color.darken(0.4);
@@ -49,11 +33,7 @@ export default function Page({ data, etag }) {
             </li>
           </ul>
         </header>
-        <div className="content">
-          <span className="image fill">
-            <img title="image" src={data.heroImage.url} />
-          </span>
-        </div>
+        <div className="content" style={{backgroundImage: "url("+data.heroImage.url+")"}}></div>
       </section>
 
       {data.content.map((section, i) => {
@@ -190,3 +170,23 @@ const useFocus = () => {
   });
   return state;
 };
+
+const reloadOnContentChange = (etag) => {
+  const focused = useFocus();
+  useEffect(
+    () => {
+      if (focused) {
+        fetch(window.location, {
+          headers: {
+            pragma: "no-cache"
+          }
+        }).then(res => {
+          if (res.ok && res.headers.get("x-version") !== etag) {
+            window.location.reload();
+          }
+        });
+      }
+    },
+    [focused]
+  );
+}
