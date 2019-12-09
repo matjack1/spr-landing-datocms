@@ -3,7 +3,6 @@
   "name": "spr-landing-datocms",
   "regions": ["sfo"],
   "builds": [
-    { "src": "image.js", "use": "@now/node" },
     { "src": "package.json", "use": "@now/next" }
   ]
 }
